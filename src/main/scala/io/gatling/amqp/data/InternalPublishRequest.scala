@@ -7,6 +7,5 @@ import io.gatling.core.structure._
 
 case class InternalPublishRequest(
   req: PublishRequest,
-  ctx: ScenarioContext,
   session: Session
 )

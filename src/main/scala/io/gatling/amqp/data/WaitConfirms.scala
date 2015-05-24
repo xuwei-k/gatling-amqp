@@ -1,3 +1,5 @@
 package io.gatling.amqp.data
 
-case class WaitConfirms()
+import io.gatling.core.session.Session
+
+case class WaitConfirms(session: Session)

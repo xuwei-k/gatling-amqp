@@ -19,6 +19,8 @@ class AmqpRouter(statsEngine: StatsEngine)(implicit amqp: AmqpProtocol) extends 
       router.route(m, sender())
     case m: InternalPublishRequest =>
       router.route(m, sender())
+    case m: WaitConfirms =>
+      router.route(Broadcast(m), sender())
     case Terminated(ref) =>
       router = router.removeRoutee(ref)
 //      addRoutee

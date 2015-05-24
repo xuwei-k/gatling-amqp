@@ -8,14 +8,13 @@ import io.gatling.core.result.message.{KO, OK, ResponseTimings, Status}
 import io.gatling.core.result.writer.StatsEngine
 import io.gatling.core.session.Session
 import pl.project13.scala.rainbow._
-import scala.collection.mutable.BitSet
-import scala.collection.mutable.OpenHashMap
+import scala.collection.mutable.{BitSet, HashSet, OpenHashMap}
 
 class AmqpPublisher(statsEngine: StatsEngine)(implicit amqp: AmqpProtocol) extends AmqpActor {
   case class PublishInfo(no: Long, startedAt: Long, session: Session)
 
   class PublishStats() {
-    private val bit = BitSet()                         // PublishNo
+    private val bit = new BitSet()                         // PublishNo
     private val map = OpenHashMap[Int, PublishInfo]()  // PublishNo -> PublishInfo
 
     def publish(info: PublishInfo): Unit = {
@@ -36,6 +35,7 @@ class AmqpPublisher(statsEngine: StatsEngine)(implicit amqp: AmqpProtocol) exten
   }
 
   private val publishStats = new PublishStats()
+  private val publisherIds = new HashSet[String]()  // Session.userId.toInt
 
   override def preStart(): Unit = {
     super.preStart()
@@ -70,28 +70,44 @@ class AmqpPublisher(statsEngine: StatsEngine)(implicit amqp: AmqpProtocol) exten
       else
         publishStats.consume(no, log)
 
-    case msg@ PublishRequest(ex, routingKey, props, payload) =>
-      log.debug(s"PublishRequest(${ex.name}, $routingKey)")
-      super.interact(msg) { ch =>
-        ch.basicPublish(ex.name, routingKey, props, payload)
+    case req: PublishRequest =>
+      import req._
+      log.debug(s"PublishRequest(${exchange.name}, $routingKey)")
+      super.interact(req) { ch =>
+        ch.basicPublish(exchange.name, routingKey, properties, payload)
       }
 
-    case msg@ InternalPublishRequest(PublishRequest(ex, routingKey, props, payload), ctx, session) =>
+    case req: InternalPublishRequest =>
       log.debug(s"InternalPublishRequest")
-      val info = PublishInfo(channel.getNextPublishSeqNo(), nowMillis, session)
-      try {
-        channel.basicPublish(ex.name, routingKey, props, payload)
-        publishStats.publish(info)
 
-        if (! amqp.isConfirmMode) {
-          logOk(info, nowMillis)
-        }
+      publishOne(req)
 
-      } catch {
-        case e: Exception =>
-          log.error(s"basicPublish($ex) failed", e)
-          logNg(info, nowMillis, "publish failed")
+    case WaitConfirms(session) =>
+      publisherIds.remove(session.userId)
+      if (publisherIds.isEmpty) {
+        log.info("got confirms: all publisher finished".green)
+      } else {
+        log.info(s"got confirms: waiting publishers ${publisherIds}".yellow)
       }
+  }
+
+  private def publishOne(event: InternalPublishRequest): Unit = {
+    import event._
+    import event.req._
+    val info = PublishInfo(channel.getNextPublishSeqNo(), nowMillis, session)
+    try {
+      channel.basicPublish(exchange.name, routingKey, properties, payload)
+      publishStats.publish(info)
+      publisherIds += session.userId
+
+      if (! amqp.isConfirmMode) {
+        logOk(info, nowMillis)
+      }
+    } catch {
+      case e: Exception =>
+        log.error(s"basicPublish($exchange) failed", e)
+        logNg(info, nowMillis, "publish failed")
+    }
   }
 
   private def logOk(info: PublishInfo, stoppedAt: Long)             : Unit = logResponse(info, stoppedAt, OK, None)

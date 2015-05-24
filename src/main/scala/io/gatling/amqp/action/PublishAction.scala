@@ -16,7 +16,13 @@ import scala.util.Failure
 
 class PublishAction(val next: ActorRef, ctx: ScenarioContext, req: PublishRequest)(implicit amqp: AmqpProtocol) extends Chainable with ActorLogging {
   override def execute(session: Session) {
-    amqp.router ! InternalPublishRequest(req, ctx, session)
+    for (i <- 1 to req.count) {
+      amqp.router ! InternalPublishRequest(req, session)
+    }
+    if (req.waitAck) {
+      amqp.router ! WaitConfirms(session)
+    }
+
     next ! session
   }
 }
