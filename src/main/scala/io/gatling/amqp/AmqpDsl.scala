@@ -5,7 +5,7 @@ import io.gatling.amqp.config._
 import io.gatling.amqp.request.builder._
 import io.gatling.core.session.Expression
 
-trait AmqpModule extends AmqpCheckSupport {
+trait AmqpDsl extends AmqpCheckSupport {
 
   def amqp = new AmqpProtocolBuilder(AmqpProtocol.default)
 
