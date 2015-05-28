@@ -17,7 +17,7 @@ class AmqpRouter(statsEngine: StatsEngine)(implicit amqp: AmqpProtocol) extends 
   def receive: Receive = {
     case m: PublishRequest =>
       router.route(m, sender())
-    case m: InternalPublishRequest =>
+    case m: AmqpPublishEvent =>
       router.route(m, sender())
     case m: WaitConfirms =>
       router.route(Broadcast(m), sender())
