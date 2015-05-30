@@ -29,7 +29,8 @@ case class AmqpProtocolBuilder(
 
   // prepare
   def prepare(msg: AmqpChannelCommand) = copy(preparings = preparings :+ msg)
-  def declare(q: AmqpQueue) = prepare(DeclareQueue(q))
+  def declare(q: AmqpQueue)   : AmqpProtocolBuilder = prepare(DeclareQueue(q))
+  def declare(x: AmqpExchange): AmqpProtocolBuilder = prepare(DeclareExchange(x))
 
   def build: AmqpProtocol = {
     connection.validate

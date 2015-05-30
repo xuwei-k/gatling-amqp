@@ -10,7 +10,7 @@ import scala.collection.JavaConversions._
 
 class AmqpManage(statsEngine: StatsEngine)(implicit amqp: AmqpProtocol) extends AmqpActor {
   override def receive = {
-    case msg@ DeclareExchange(name, tpe, durable, autoDelete, arguments) =>
+    case msg@ DeclareExchange(AmqpExchange(name, tpe, durable, autoDelete, arguments)) =>
       log.info(s"Initializing AMQP exchange $name")
       interact(msg) { _.exchangeDeclare(name, tpe, durable, autoDelete, arguments) }
 

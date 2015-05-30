@@ -18,6 +18,7 @@ Usage
   implicit val amqpProtocol: AmqpProtocol = amqp
     .host("localhost")
     .port(5672)
+    // .vhost("/")
     .auth("guest", "guest")
     .poolSize(10)
 
@@ -59,9 +60,7 @@ Usage
   setUp(scn.inject(rampUsers(10) over (1 seconds))).protocols(amqpProtocol)
 ```
 
-- declare queue
-
-
+- declare queues, exchanges
 
 ```
   implicit val amqpProtocol: AmqpProtocol = amqp
@@ -69,6 +68,17 @@ Usage
     .port(5672)
     .auth("guest", "guest")
     .declare(queue("q1", durable = true, autoDelete = false))
+```
+
+```
+  val x = exchange("color", "direct", auto_delete = false)
+  val q = queue("orange")
+  implicit val amqpProtocol: AmqpProtocol = amqp
+    .host("localhost")
+    .port(5672)
+    .auth("guest", "guest")
+    .declare(x)
+    .declare(q)
 ```
 
 - full code: src/test/scala/io/gatling/amqp/PublishingSimulation.scala
@@ -100,7 +110,7 @@ Environment
 TODO
 ====
 
-- declare exchanges and bindings in protocol builder context
+- declare bindings in protocol builder context
 - declare exchanges, queues and bindings in action builder context (to test declaration costs)
 - make AmqpProtocol immutable
 - make Builder mutable

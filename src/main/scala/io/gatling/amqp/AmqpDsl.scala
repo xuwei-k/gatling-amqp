@@ -30,5 +30,6 @@ trait AmqpDsl extends AmqpCheckSupport {
 
   implicit def amqpRequestBuilder2ActionBuilder(builder: AmqpRequestBuilder)(implicit amqp: AmqpProtocol): ActionBuilder = new AmqpActionBuilder(builder)
 
-  val queue = AmqpQueue
+  val exchange = AmqpExchange
+  val queue    = AmqpQueue
 }
