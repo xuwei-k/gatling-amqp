@@ -93,7 +93,10 @@ Run
 
 ```
 % sbt
-> test
+> testOnly io.gatling.amqp.PublishingSimulation
+
+% sbt
+> testOnly io.gatling.amqp.ConsumingSimulation
 ```
 
 Restrictions

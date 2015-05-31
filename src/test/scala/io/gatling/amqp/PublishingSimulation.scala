@@ -21,11 +21,9 @@ class PublishingSimulation extends Simulation {
   // val req   = PublishRequest("q1", bytes = bytes)
   val req   = PublishRequest("q1", bytes = bytes).persistent
 
-  val scn = scenario("AMQP Publish(ack)").repeat(1000) {
+  val scn = scenario("AMQP Publish(ack)").repeat(3) {
     exec(amqp("Publish").publish(req))
   }
 
   setUp(scn.inject(rampUsers(3) over (1 seconds))).protocols(amqpProtocol)
 }
-
-
