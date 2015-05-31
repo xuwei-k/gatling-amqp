@@ -11,7 +11,7 @@ Gatling AMQP support
 Usage
 =====
 
-- publish (normal)
+## publish (normal)
 
 
 ```
@@ -31,16 +31,18 @@ Usage
   setUp(scn.inject(rampUsers(10) over (1 seconds))).protocols(amqpProtocol)
 ```
 
-- publish (with persistent)
-    - PublishRequest.persistent make request DeliveryMode(2)
-    - known issue: persistent reset request's properties
+## publish (with persistent)
+
+- PublishRequest.persistent make request DeliveryMode(2)
+- known issue: persistent reset request's properties
 
 ```
   val req = PublishRequest("q1", payload = "{foo:1}").persistent
 ```
 
-- publish (with confirmation)
-    - set "confirmMode()" in protocol that invokes "channel.confirmSelect()"
+## publish (with confirmation)
+
+- set "confirmMode()" in protocol that invokes "channel.confirmSelect()"
 
 
 ```
@@ -60,7 +62,7 @@ Usage
   setUp(scn.inject(rampUsers(10) over (1 seconds))).protocols(amqpProtocol)
 ```
 
-- declare queues
+## declare queues
 
 ```
   implicit val amqpProtocol: AmqpProtocol = amqp
@@ -70,7 +72,7 @@ Usage
     .declare(queue("q1", durable = true, autoDelete = false))
 ```
 
-- declare exchange and binding
+## declare exchange and binding
 
 
 ```
@@ -85,9 +87,9 @@ Usage
     .bind(x, q, routingKey = "orange")
 ```
 
-    - full code: src/test/scala/io/gatling/amqp/PublishingSimulation.scala
+- full code: src/test/scala/io/gatling/amqp/PublishingSimulation.scala
 
-- consume (auto acked)
+## consume (auto acked)
 
 
 ```
@@ -102,11 +104,12 @@ Usage
 
   setUp(scn.inject(atOnceUsers(1))).protocols(amqpProtocol)
 ```
-    - full code: src/test/scala/io/gatling/amqp/ConsumingSimulation.scala
 
+- full code: src/test/scala/io/gatling/amqp/ConsumingSimulation.scala
 
-- consume (manual acked)
-    - not implemented yet
+## consume (manual acked)
+
+- not implemented yet
 
 
 Run
@@ -120,12 +123,31 @@ Run
 > testOnly io.gatling.amqp.ConsumingSimulation
 ```
 
-Restrictions
-============
+Benchmark
+=========
 
-- work in progress
-    - only one action can be defined in action builder
-    - support only publish action (TODO: consume)
+- total bytes: `servers * payalod * messages * users`
+
+## publish (persistent queue)
+
+| servers | payload | ack | repeat | users | total | sec | qps  | spd       |
+|--------:|--------:|:---:|-------:|------:|------:|----:|-----:|----------:|
+| 1       |   1 KB  |  o  | 100000 |    10 | 1 GB  |  69 | 14326| 14.3 MB/s |
+| 1       |  10 KB  |  o  |  10000 |    10 | 1 GB  |  14 |  6778| 67.8 MB/s |
+| 1       | 100 KB  |  o  |   1000 |    10 | 1 GB  |  11 |   881| 88.1 MB/s |
+| 1       |   1 MB  |  o  |    100 |    10 | 1 GB  |  10 |    97| 97.8 MB/s |
+| 1       |  10 MB  |  o  |    100 |     1 | 1 GB  |  -  |   -  | log error |
+| 1       |  10 KB  |  o  |   1000 |   100 | 1 GB  |  17 |  5791| 57.9 MB/s |
+| 4       |   1 KB  |  o  | 100000 |    10 | 4 GB  | 298 | 13490| 13.5 MB/s |
+| 4       |  10 KB  |  o  |  10000 |    10 | 4 GB  |  56 |  7208| 72.1 MB/s |
+
+- log error: statsEngine stopped before working actors finished
+
+## publish (persistent queue, paging)
+
+| servers | payload | ack | repeat | users | total | sec | qps   | spd       |
+|--------:|--------:|:---:|-------:|------:|------:|----:|------:|----------:|
+| 1       | 10 KB   |  o  | 100000 |    10 | 10 GB | 143 |  6983 | 69.8 MB/s |
 
 
 Environment
