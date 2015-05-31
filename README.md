@@ -85,7 +85,28 @@ Usage
     .bind(x, q, routingKey = "orange")
 ```
 
-- full code: src/test/scala/io/gatling/amqp/PublishingSimulation.scala
+    - full code: src/test/scala/io/gatling/amqp/PublishingSimulation.scala
+
+- consume (auto acked)
+
+
+```
+  implicit val amqpProtocol: AmqpProtocol = amqp
+    .host("amqp")
+    .port(5672)
+    .auth("guest", "guest")
+
+  val scn = scenario("AMQP Publish(ack)").exec {
+    amqp("Consume").consume("q1", autoAck = true)
+  }
+
+  setUp(scn.inject(atOnceUsers(1))).protocols(amqpProtocol)
+```
+    - full code: src/test/scala/io/gatling/amqp/ConsumingSimulation.scala
+
+
+- consume (manual acked)
+    - not implemented yet
 
 
 Run
@@ -93,7 +114,10 @@ Run
 
 ```
 % sbt
-> test
+> testOnly io.gatling.amqp.PublishingSimulation
+
+% sbt
+> testOnly io.gatling.amqp.ConsumingSimulation
 ```
 
 Restrictions
@@ -117,4 +141,4 @@ TODO
 - declare exchanges, queues and bindings in action builder context (to test declaration costs)
 - make AmqpProtocol immutable
 - make Builder mutable
-- consume action
+- consume action (manual ack)
